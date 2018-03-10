@@ -1,0 +1,11 @@
+FROM python:alpine3.6
+
+WORKDIR /app
+
+COPY ./test/requirements.txt /app
+RUN pip3 install -r /app/requirements.txt
+
+COPY ./mqttrpc/ /app/mqttrpc/
+COPY ./test/test_mqttrpc.py /app
+
+CMD python3 /app/test_mqttrpc.py

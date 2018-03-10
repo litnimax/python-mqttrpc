@@ -1,0 +1,65 @@
+version: '3'
+
+services:
+
+    broker:
+        build:
+          context: ../
+          dockerfile: test/Dockerfile.broker
+        container_name: mqtt_broker
+        ports:
+          - "1883:1883"
+
+
+    odoo:
+        image: odoo:10.0
+        depends_on:
+          - db
+        ports:
+          - "8069:8069"
+        command: ["odoo", "--db-filter=test", "--database=test", "--log-level=debug_rpc"]
+
+    db:
+        image: postgres:9.6
+        environment:
+          - POSTGRES_PASSWORD=odoo
+          - POSTGRES_USER=odoo
+
+    http_bridge:
+        build:
+          context: ..
+          dockerfile: test/Dockerfile.http_bridge
+        container_name: http_bridge
+        depends_on:
+          - broker
+          - odoo
+        environment:
+          - MQTT_URL=mqtt://broker
+          - HTTP_URL=http://odoo:8069/jsonrpc
+          - HTTP_REQUEST_TIMEOUT=4
+          - MQTT_REPLY_TIMEOUT=5
+          - DEBUG=1
+
+    test:
+        build:
+          context: ..
+          dockerfile: test/Dockerfile.test
+        container_name: mqttrpc_test
+        depends_on:
+          - broker
+        environment:
+          - CLIENT_UID=test
+          - MQTT_URL=mqtt://broker
+
+    test_odoo:
+        build:
+          context: ..
+          dockerfile: test/Dockerfile.test.odoo
+        container_name: mqttrpc_test_odoo
+        depends_on:
+          - odoo
+          - http_bridge
+        environment:
+          - MQTT_URL=mqtt://broker
+        ports:
+          - "8888:8888"

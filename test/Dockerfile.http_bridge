@@ -1,0 +1,10 @@
+FROM python:alpine3.6
+
+WORKDIR /app
+
+COPY ./test/requirements.txt /app
+RUN pip3 install -r /app/requirements.txt
+
+COPY ./mqttrpc/ /app/mqttrpc/
+
+CMD python3 /app/mqttrpc/http_bridge.py
