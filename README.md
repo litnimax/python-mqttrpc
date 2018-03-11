@@ -24,7 +24,7 @@ In out test case we have ClientA and ClientB, MQTT broker is running on localhos
 ClientA wants to call *hello* method on ClientB. Here is the code.
 
 ClientA:
-```
+```python
 import asyncio
 from mqttrpc import MQTTRPC
 
@@ -46,7 +46,7 @@ print(
 ```
 
 ClientB:
-```
+```python
 import asyncio
 from mqttrpc import MQTTRPC
 from mqttrpc import dispatcher
@@ -69,13 +69,13 @@ print(
 ```
 
 Output from client B:
-```
+```sh
 MacBook-Pro-Max:test max$ python3 client_a.py
 Client not connected, waiting for it
 Hello, Max
 ```
 Output from client B:
-```
+```sh
 MacBook-Pro-Max:test max$ python3 client_b.py
 Got Hello request, sending back.
 ```
@@ -94,11 +94,11 @@ In the example below we use Odoo as RPC server.
 
 First, start a http_bridge settings MQTT client UID and HTTP server URL.
 
-```
+```sh
 CLIENT_UID=odoo_bridge HTTP_URL=http://localhost:8069/jsonrpc python3 http_bridge.py
 ```
 Now let run the following code:
-```
+```python
 import asyncio
 from mqttrpc import MQTTRPC, OdooRPCProxy
 
@@ -126,7 +126,7 @@ print(
 
 ```
 Here is the output:
-```
+```sh
 MacBook-Pro-Max:test max$ python3 test_mqttrpc_odoo.py
 Client not connected, waiting for it
 Administrator uid is:  1
@@ -150,16 +150,16 @@ After that you can call methods without prior call to login.
 ## Testing
 Docker files are supplied with all examples.
 
-```
+```sh
 cd test
 docker-compose up -d db && sleep 5 &&  docker-compose up -d odoo broker
 ```
 Wait 5 seconds for odoo test db init, after that run:
-```
+```sh
 docker-compose up http_bridge test test_odoo
 ```
 Output:
-```
+```sh
 mqtt_broker is up-to-date
 Starting mqttrpc_test ... done
 mqttrpc_test   | INFO:mqtt_rpc:Connected.
@@ -170,11 +170,11 @@ MacBook-Pro-Max:test max$
 Notice 'Hello World' - that means RPC over MQTT is working.
 
 Now test Odoo MQTT RPC bridge:
-```
+```sh
 docker-compose up test_odoo
 ```
 Output:
-```
+```sh
 mqttrpc_test_odoo | INFO:mqtt_rpc:Connected.
 mqttrpc_test_odoo | Administrator id is:  [3]
 mqttrpc_test_odoo exited with code 0
