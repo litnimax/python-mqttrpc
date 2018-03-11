@@ -1,3 +1,4 @@
+import os
 
 class RPCProxy(object):
 
@@ -27,7 +28,14 @@ class RPCProxy(object):
         return proxy_func
 
 
+# You can specify odoo login uid to make requests without login call.
+ODOO_LOGIN_UID = os.environ.get('USER_UID') 
+
 class OdooRPCProxy(RPCProxy):
+
+    def __init__(self, client, destination, uid=None, one_way=False):
+        super().__init__(client, destination, one_way=one_way)
+        self.uid = uid if uid else ODOO_LOGIN_UID
     
     async def login(self, db, login, password):
         self.db = db

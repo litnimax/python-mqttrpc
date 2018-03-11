@@ -9,13 +9,14 @@ import re
 import signal
 import sys
 import uuid
-from hbmqtt.client import MQTTClient, ClientException, mqtt_connected
+from hbmqtt.client import MQTTClient, ClientException
 from hbmqtt.mqtt.constants import QOS_2
 from tinyrpc.server import RPCServer
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
-from tinyrpc.dispatch import RPCDispatcher
 from tinyrpc.exc import RPCError
 from .rpcproxy import RPCProxy
+#from .dispatcher import RPCDispatcher
+from tinyrpc.dispatch import RPCDispatcher
 
 
 logger = logging.getLogger('mqtt_rpc')
@@ -35,16 +36,16 @@ class MQTTRPC(MQTTClient):
     subscriptions = [] # We hold a list of our subscriptions not to subscribe to
                        # every request to the same client.
 
-    def __init__(self, mqtt_url=MQTT_URL, client_uid=CLIENT_UID, loop=None):
-        super(MQTTRPC, self).__init__(client_id=CLIENT_UID)
+    def __init__(self, mqtt_url=None, client_uid=None, loop=None):
         if not loop:
             loop = asyncio.get_event_loop()
         self.loop = loop
         self.protocol = JSONRPCProtocol()
         self.dispatcher = dispatcher
-        self.mqtt_url = mqtt_url
+        self.mqtt_url = mqtt_url if mqtt_url else MQTT_URL
         self.mqtt_reply_timeout = MQTT_REPLY_TIMEOUT
-        self.client_uid = client_uid
+        self.client_uid = client_uid if client_uid else CLIENT_UID
+        super(MQTTRPC, self).__init__(client_id=self.client_uid)        
         for signame in ('SIGINT', 'SIGTERM'):
             self.loop.add_signal_handler(getattr(signal, signame),
                 lambda: asyncio.ensure_future(self.stop()))
@@ -53,7 +54,7 @@ class MQTTRPC(MQTTClient):
 
 
     async def stop(self):
-        logger.info('Stopping...')
+        logger.info('Stopping mqttrpc...')
         # Check subscriptions
         await self.unsubscribe(self.subscriptions)
         await self.disconnect()
@@ -78,8 +79,6 @@ class MQTTRPC(MQTTClient):
                     await self.deliver_message())
             except asyncio.CancelledError:
                 return
-
-        
 
 
     async def process_message(self, message):
@@ -129,12 +128,10 @@ class MQTTRPC(MQTTClient):
         logger.debug('Not implemented')
 
 
-    @mqtt_connected
     async def receive_rpc_request(self, context, data):
         logger.debug('Request: {}'.format(data))
         self.request_count += 1
         if type(data) != str:
-            # Turn non-string to string or die trying
             data = json.dumps(data)
 
         message = data
@@ -145,6 +142,7 @@ class MQTTRPC(MQTTClient):
             except RPCError as e:
                 response = e.error_respond()
             else:
+                request.args.insert(0, self) # Hack to add first params as self
                 response = self.dispatcher.dispatch(
                     request,
                     getattr(self.protocol, '_caller', None)
@@ -166,7 +164,6 @@ class MQTTRPC(MQTTClient):
         return RPCProxy(self, destination, one_way)
 
 
-    @mqtt_connected
     async def _send_and_handle_reply(self, destination, req, one_way, no_exception=False):
         # Convert to bytes and send to destination
         if one_way:

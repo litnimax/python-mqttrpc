@@ -1,7 +1,6 @@
 import asyncio
 import logging
-import os
-from mqttrpc import MQTTRPC, dispatcher, OdooRPCProxy
+from mqttrpc import MQTTRPC, OdooRPCProxy
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('hbmqtt').setLevel(level=logging.INFO)
@@ -10,7 +9,7 @@ logging.getLogger('hbmqtt').setLevel(level=logging.INFO)
 class TestOdooMQTTRPC(MQTTRPC):
 
     async def run_partner_test(self, partner_name):
-        proxy = OdooRPCProxy(self, 'http_bridge')
+        proxy = OdooRPCProxy(self, 'odoo_bridge')
         try:
             uid = await proxy.login('test', 'admin', 'admin')
             print ('Administrator uid is: ', uid)
