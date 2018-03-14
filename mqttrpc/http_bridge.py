@@ -220,8 +220,8 @@ class HttpMqttBridge(object):
         async with aiohttp.ClientSession() as session:
             try:
                 async with timeout(HTTP_REQUEST_TIMEOUT, loop=self.loop) as t:
-                    async with session.get(self.http_url, json=data) as resp:                
-                        response = await resp.text()
+                    async with session.get(self.http_url, json=data) as resp:
+                        response, status = await resp.text(), resp.status
                         logger.debug('HTTP response: [{}] {}'.format(
                                                         resp.status, response))
             except asyncio.TimeoutError:
@@ -232,11 +232,25 @@ class HttpMqttBridge(object):
                 else:
                     logger.warning('Notification timeout: {}'.format(data))
 
+        # Parse response as JSON and inject error.data if present
+        try:
+            js_response = json.loads(response)
+            if js_response.get('error') and js_response['error'].get('data'):
+                js_response['error']['message'] = '{}: {}'.format(
+                    js_response['error']['message'],
+                    js_response['error']['data'])
+                await self.client.publish(
+                    'rpc/{}/{}/reply'.format(CLIENT_UID, from_uid),
+                    json.dumps(js_response).encode())
+            else:
+                # No error
+                await self.client.publish(
+                    'rpc/{}/{}/reply'.format(CLIENT_UID, from_uid),
+                    response.encode())
 
-
-        await self.client.publish(
-            'rpc/{}/{}/reply'.format(CLIENT_UID, from_uid),
-            response.encode())
+        except json.decoder.JSONDecodeError:
+            return await self.send_mqtt_rpc_error_message(from_uid, data['id'],
+                                            message='Cannot jsonify response')
 
 
     async def send_mqtt_rpc_error_message(self, to_uid, request_id, 

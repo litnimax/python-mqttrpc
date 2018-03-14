@@ -1,4 +1,8 @@
+import logging
 import os
+from tinyrpc.exc import RPCError
+
+logger = logging.getLogger(__name__)
 
 class RPCProxy(object):
 
@@ -45,15 +49,58 @@ class OdooRPCProxy(RPCProxy):
                          args=[db, login, password])
         self.uid = int(uid)
         if not uid:
-            logger.warning(
+            raise RPCError(
                 'Odoo login failed, db: {}, login: {}, password: {}'.format(
                     db, login, password))
+        logger.debug('Odoo login: uid={}'.format(uid))
         return uid
         
 
-    def execute(self, model, method, params):
-        if not self.uid:
-            raise Exception('Not logged in')
+
+    def search(self, model, domain, offset=0, limit=None, order=None):
+        logger.debug('search {} domain {}'.format(model, domain))
         return self.call(service='object', method='execute',
-                args=[self.db, self.uid, self.password, model, method, params])
+                args=[self.db, self.uid, self.password, model, 'search', 
+                      domain, offset, limit, order])
+
+
+    def search_count(self, model, domain):
+        logger.debug('search_count {} domain {}'.format(model, domain))
+        return self.call(service='object', method='execute',
+                args=[self.db, self.uid, self.password, model, 'search_count', 
+                      domain, 0, None, None, 1])
+
+
+    def search_read(self, model, domain, fields=[],
+                                         offset=0, limit=None, order=None):
+        logger.debug('search_read {} {} {}'.format(model, domain, fields))
+        return self.call(service='object', method='execute',
+                args=[self.db, self.uid, self.password, model, 'search_read', 
+                      domain, fields, offset, limit, order])
+
+
+    def read(self, model, ids, fields=[]):
+        logger.debug('read {} {} {}'.format(model, ids, fields))
+        return self.call(service='object', method='execute',
+                args=[self.db, self.uid, self.password, model, 'read', 
+                      ids, fields])
+
+
+    def create(self, model, vals, context=None):
+        logger.debug('create {} vals {}'.format(model, vals))
+        return self.call(service='object', method='execute',
+                args=[self.db, self.uid, self.password, model, 
+                     'create', vals, context or {}])
+
+
+    def unlink(self, model, ids):
+        logger.debug('unlink {} {}'.format(model, ids))
+        return self.call(service='object', method='execute',
+                args=[self.db, self.uid, self.password, model, 'unlink', ids])
+
+
+    def execute(self, model, method, *args, **kwargs):
+        logger.debug('execute {} {}'.format(model, method, args, kwargs))
+        return self.call(service='object', method='execute',
+            args=[self.db, self.uid, self.password, model, method, args, kwargs])
 

@@ -180,4 +180,4 @@ mqttrpc_test_odoo | Administrator id is:  [3]
 mqttrpc_test_odoo exited with code 0
 MacBook-Pro-Max:test max$
 ```
-Notice Administrator is is 3. Bridge is working.
+Notice Administrator id = [3].§
