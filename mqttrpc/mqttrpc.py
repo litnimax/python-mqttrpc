@@ -142,7 +142,9 @@ class MQTTRPC(MQTTClient):
             except RPCError as e:
                 response = e.error_respond()
             else:
-                request.args.insert(0, self) # Hack to add first params as self
+                # Hack to add first params as self
+                if not self in request.args:
+                    request.args.insert(0, self)
                 response = self.dispatcher.dispatch(
                     request,
                     getattr(self.protocol, '_caller', None)
