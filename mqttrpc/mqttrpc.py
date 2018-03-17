@@ -36,7 +36,7 @@ class MQTTRPC(MQTTClient):
     subscriptions = [] # We hold a list of our subscriptions not to subscribe to
                        # every request to the same client.
 
-    def __init__(self, mqtt_url=None, client_uid=None, loop=None):
+    def __init__(self, mqtt_url=None, client_uid=None, loop=None, config=None):
         if not loop:
             loop = asyncio.get_event_loop()
         self.loop = loop
@@ -45,7 +45,8 @@ class MQTTRPC(MQTTClient):
         self.mqtt_url = mqtt_url if mqtt_url else MQTT_URL
         self.mqtt_reply_timeout = MQTT_REPLY_TIMEOUT
         self.client_uid = client_uid if client_uid else CLIENT_UID
-        super(MQTTRPC, self).__init__(client_id=self.client_uid)        
+        super(MQTTRPC, self).__init__(client_id=self.client_uid, loop=loop,
+                                      config=config)
         for signame in ('SIGINT', 'SIGTERM'):
             self.loop.add_signal_handler(getattr(signal, signame),
                 lambda: asyncio.ensure_future(self.stop()))
@@ -56,8 +57,9 @@ class MQTTRPC(MQTTClient):
     async def stop(self):
         logger.info('Stopping mqttrpc...')
         # Check subscriptions
-        await self.unsubscribe(self.subscriptions)
-        await self.disconnect()
+        if self._connected_state.is_set():
+            await self.unsubscribe(self.subscriptions)
+            await self.disconnect()
         tasks = [task for task in asyncio.Task.all_tasks() if task is not
                     asyncio.tasks.Task.current_task()]
         list(map(lambda task: task.cancel(), tasks))
