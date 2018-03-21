@@ -15,4 +15,4 @@ loop = asyncio.get_event_loop()
 client_b = ClientB(client_uid='client_b')
 print(
     loop.run_until_complete(
-        client_b.serve_forever()))
+        client_b.process_messages()))

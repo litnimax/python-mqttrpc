@@ -25,7 +25,7 @@ class TestOdooMQTTRPC(MQTTRPC):
 loop = asyncio.get_event_loop()
 server = TestOdooMQTTRPC(loop=loop)
 try:
-    loop.create_task(server.serve_forever())
+    loop.create_task(server.process_messages())
     assert [3] == loop.run_until_complete(server.run_partner_test('Administrator'))
 
 finally:

@@ -26,5 +26,5 @@ class TestMQTTRPC(MQTTRPC):
 
 loop = asyncio.get_event_loop()
 server = TestMQTTRPC(client_uid='test', loop=loop)
-loop.create_task(server.serve_forever())
+loop.create_task(server.process_messages())
 assert 'Hello, World' == loop.run_until_complete(server.run_test('World'))

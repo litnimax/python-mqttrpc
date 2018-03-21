@@ -12,7 +12,7 @@ class ClientA(MQTTRPC):
 
 loop = asyncio.get_event_loop()
 client_a = ClientA(client_uid='client_a')
-asyncio.ensure_future(client_a.serve_forever())
+asyncio.ensure_future(client_a.process_messages())
 print(
     loop.run_until_complete(
         client_a.run_hello_on_b('Max')))

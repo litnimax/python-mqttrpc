@@ -67,7 +67,7 @@ class MQTTRPC(MQTTClient):
         logger.debug('Finished cancelling tasks, result: {}'.format(results))
 
 
-    async def serve_forever(self):
+    async def process_messages(self):
         logger.info('Connecting to {}'.format(self.mqtt_url))
         await self.connect(self.mqtt_url)
         logger.info('Connected.')
@@ -187,7 +187,6 @@ class MQTTRPC(MQTTClient):
             logger.debug('Subscribed to reply topic {}'.format(reply_topic))
         else:
             logger.debug('Already subscribed for topic {}'.format(reply_topic))
-
         await self.publish('rpc/{}/{}'.format(destination, self.client_uid),
                                   req.serialize().encode())
         logger.debug(

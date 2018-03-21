@@ -39,7 +39,7 @@ class ClientA(MQTTRPC):
 
 loop = asyncio.get_event_loop()
 client_a = ClientA(client_uid='client_a')
-asyncio.ensure_future(client_a.serve_forever())
+asyncio.ensure_future(client_a.process_messages())
 print(
     loop.run_until_complete(
         client_a.run_hello_on_b('Max')))
@@ -64,7 +64,7 @@ loop = asyncio.get_event_loop()
 client_b = ClientB(client_uid='client_b')
 print(
     loop.run_until_complete(
-        client_b.serve_forever()))
+        client_b.process_messages()))
 
 ```
 
@@ -120,7 +120,7 @@ class TestOdooMQTTRPC(MQTTRPC):
 
 loop = asyncio.get_event_loop()
 server = TestOdooMQTTRPC(loop=loop)
-loop.create_task(server.serve_forever())
+loop.create_task(server.process_messages())
 print(
     loop.run_until_complete(server.run_partner_test('Administrator')))
 

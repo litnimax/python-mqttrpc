@@ -60,7 +60,7 @@ class HttpMqttBridge(object):
         logger.debug('Finished cancelling tasks, result: {}'.format(results))
 
 
-    async def serve_forever(self):
+    async def process_messages(self):
         self.http_server = web.Server(self.process_http_requests)
         await loop.create_server(self.http_server, '127.0.0.1', 8888)
         await self.client.connect(self.mqtt_url)
@@ -271,4 +271,4 @@ if __name__ == '__main__':
     logging.getLogger('hbmqtt').setLevel(level=logging.WARNING)
     loop = asyncio.get_event_loop()
     server = HttpMqttBridge()
-    loop.run_until_complete(server.serve_forever())
+    loop.run_until_complete(server.process_messages())
