@@ -9,7 +9,7 @@ logging.getLogger('hbmqtt').setLevel(level=logging.INFO)
 
 class TestMQTTRPC(MQTTRPC):
     @dispatcher.public
-    def test(name=''):
+    async def test(name=''):
         print('Hello')
         return 'Hello, {}'.format(name)
 

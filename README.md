@@ -32,9 +32,9 @@ from mqttrpc import MQTTRPC
 
 class ClientA(MQTTRPC):
 
-    def run_hello_on_b(self, name):
+    async def run_hello_on_b(self, name):
         client_b = self.get_proxy_for('client_b')
-        return client_b.hello(name)
+        return await client_b.hello(name)
 
 
 loop = asyncio.get_event_loop()

@@ -9,6 +9,7 @@ import os
 import re
 import signal
 import sys
+import types
 import uuid
 from hbmqtt.client import MQTTClient, ClientException
 from hbmqtt.mqtt.constants import QOS_2
@@ -17,12 +18,12 @@ from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.exc import RPCError
 from .rpcproxy import RPCProxy
 #from .dispatcher import RPCDispatcher
-from tinyrpc.dispatch import RPCDispatcher
+from .dispatcher import AsyncRPCDispatcher
 
 
 logger = logging.getLogger('mqtt_rpc')
 
-dispatcher = RPCDispatcher()
+dispatcher = AsyncRPCDispatcher()
 
 MQTT_REPLY_TIMEOUT = float(os.environ.get('MQTT_REPLY_TIMEOUT', 5))
 CLIENT_UID = os.environ.get('CLIENT_UID', str(uuid.getnode()))
@@ -92,7 +93,7 @@ class MQTTRPC(MQTTClient):
             logger.debug('RPC request at {}'.format(message.topic))
             _, _, context = message.topic.split('/')
             data_str = message.data.decode()
-            asyncio.ensure_future(self.receive_rpc_request(context, data_str))
+            await self.receive_rpc_request(context, data_str)
 
         elif re.search('^rpc/(\w+)/(\w+)/reply$', message.topic):
             # RPC reply
@@ -139,7 +140,7 @@ class MQTTRPC(MQTTClient):
 
         message = data
 
-        def handle_message(context, message):
+        async def handle_message(context, message):
             try:
                 request = self.protocol.parse_request(message)
             except RPCError as e:
@@ -148,10 +149,10 @@ class MQTTRPC(MQTTClient):
                 # Hack to add first params as self
                 if not self in request.args:
                     request.args.insert(0, self)
-                response = self.dispatcher.dispatch(
+                response = await self.dispatcher.dispatch(
                     request,
                     getattr(self.protocol, '_caller', None)
-                )
+                )                
 
             # send reply
             if response is not None:
@@ -161,7 +162,7 @@ class MQTTRPC(MQTTClient):
                     self.publish('rpc/{}/{}/reply'.format(self.client_uid, context), result.encode())
                 )
 
-        handle_message(context, message)
+        await handle_message(context, message)
 
 
 

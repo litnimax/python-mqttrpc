@@ -6,7 +6,7 @@ from mqttrpc import dispatcher
 class ClientB(MQTTRPC):
     
     @dispatcher.public
-    def hello(self, name):
+    async def hello(self, name):
         print ('Got Hello request, sending back.')
         return 'Hello, {}'.format(name)
 

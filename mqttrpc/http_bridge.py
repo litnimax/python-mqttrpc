@@ -176,6 +176,14 @@ class HttpMqttBridge(object):
         js_data = json.loads(data)
         try:            
             dst = js_data['params'].pop('dst')
+            timeout = js_data['params'].get('timeout') \
+                                        and js_data['params'].pop('timeout')
+            if not timeout:
+                logger.debug('Setting default timeout={} on MQTT reply'.format(
+                                                    self.mqtt_reply_timeout))
+                timeout = self.mqtt_reply_timeout
+            else:
+                logger.debug('Setting timeout={} from params'.format(timeout))
         except KeyError:
             logger.error('Bad RPC, no dst specified: {}'.format(data))
             error['error']['message'] = "No dst specified"
@@ -207,8 +215,7 @@ class HttpMqttBridge(object):
             'Published request id {} to {}'.format(js_data['id'], dst))
         try:
             reply_data = await asyncio.wait_for(
-                self.mqtt_replies[reply_topic][js_data['id']].get(),
-                self.mqtt_reply_timeout)
+                self.mqtt_replies[reply_topic][js_data['id']].get(), timeout)
             self.mqtt_replies[reply_topic][js_data['id']].task_done()
 
         except asyncio.TimeoutError:
