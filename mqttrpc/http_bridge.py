@@ -17,6 +17,8 @@ from hbmqtt.mqtt.constants import QOS_2
 
 
 HTTP_URL = os.environ.get('HTTP_URL', 'http://localhost:8069/jsonrpc')
+HTTP_BIND_ADDRESS = os.environ.get('HTTP_BIND_ADDRESS', '0.0.0.0')
+HTTP_BIND_PORT = os.environ.get('HTTP_BIND_PORT', '8888')
 HTTP_REQUEST_TIMEOUT = float(os.environ.get('HTTP_REQUEST_TIMEOUT', 4))
 MQTT_URL = os.environ.get('MQTT_URL', 'mqtt://localhost/')
 CLIENT_UID = os.environ.get('CLIENT_UID', 'http_bridge')
@@ -64,7 +66,8 @@ class HttpMqttBridge(object):
 
     async def process_messages(self):
         self.http_server = web.Server(self.process_http_requests)
-        await loop.create_server(self.http_server, '127.0.0.1', 8888)
+        await loop.create_server(self.http_server,
+                                 HTTP_BIND_ADDRESS, int(HTTP_BIND_PORT))
         await self.client.connect(self.mqtt_url)
         await self.client.subscribe([
             ('rpc/{}/+'.format(CLIENT_UID), QOS_2),
