@@ -79,8 +79,8 @@ class MQTTRPC(MQTTClient):
         logger.debug('Starting process messages.')
         while True:
             try:
-                await self.process_message(
-                    await self.deliver_message())
+                self.loop.create_task(self.process_message(
+                    await self.deliver_message()))
             except asyncio.CancelledError:
                 return
 
@@ -201,7 +201,9 @@ class MQTTRPC(MQTTClient):
 
         except asyncio.TimeoutError:
             del self.rpc_replies[reply_topic][req.unique_id]
-            raise RPCError('Reply Timeout')
+            raise RPCError(
+                'Reply Timeout, topic {}, id {}, method {}, args {}, kwargs {}'.format(
+                    reply_topic, req.unique_id, req.method, req.args, req.kwargs))
 
         else:
             # We got a reply, handle it.
