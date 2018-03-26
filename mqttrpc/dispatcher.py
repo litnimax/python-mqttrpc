@@ -1,4 +1,5 @@
 from tinyrpc.dispatch import RPCDispatcher
+from tinyrpc.exc import *
 
 class AsyncRPCDispatcher(RPCDispatcher):
     async def dispatch(self, request, caller=None):
