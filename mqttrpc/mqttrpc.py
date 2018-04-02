@@ -128,7 +128,7 @@ class MQTTRPC(MQTTClient):
                         await waiting_replies[request_id].put(data_str)
         else:
             logger.debug('Passing to on_message handler')
-            await self.on_message()
+            await self.on_message(message)
 
 
     async def on_message(self, message):
