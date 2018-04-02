@@ -32,6 +32,7 @@ MQTT_URL = os.environ.get('MQTT_URL', 'mqtt://localhost')
 
 class MQTTRPC(MQTTClient):
     client_uid = CLIENT_UID
+    cleansession = True
     mqtt_reply_timeout = MQTT_REPLY_TIMEOUT
     mqtt_url = MQTT_URL
     request_count = 0
@@ -75,7 +76,7 @@ class MQTTRPC(MQTTClient):
 
     async def process_messages(self):
         logger.info('Connecting to {}'.format(self.mqtt_url))
-        await self.connect(self.mqtt_url)
+        await self.connect(self.mqtt_url, cleansession=self.cleansession)
         logger.info('Connected.')
         await self.subscribe([
             ('rpc/{}/+'.format(self.client_uid), QOS_2),
