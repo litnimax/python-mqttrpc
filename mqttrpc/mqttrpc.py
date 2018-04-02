@@ -17,7 +17,6 @@ from tinyrpc.server import RPCServer
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.exc import RPCError
 from .rpcproxy import RPCProxy
-#from .dispatcher import RPCDispatcher
 from .dispatcher import AsyncRPCDispatcher
 
 
@@ -32,6 +31,9 @@ MQTT_URL = os.environ.get('MQTT_URL', 'mqtt://localhost')
 
 
 class MQTTRPC(MQTTClient):
+    client_uid = CLIENT_UID
+    mqtt_reply_timeout = MQTT_REPLY_TIMEOUT
+    mqtt_url = MQTT_URL
     request_count = 0
     rpc_replies = {}
     replied = Event() # This event is triggered every time a new reply has come.
@@ -44,9 +46,10 @@ class MQTTRPC(MQTTClient):
         self.loop = loop
         self.protocol = JSONRPCProtocol()
         self.dispatcher = dispatcher
-        self.mqtt_url = mqtt_url if mqtt_url else MQTT_URL
-        self.mqtt_reply_timeout = MQTT_REPLY_TIMEOUT
-        self.client_uid = client_uid if client_uid else CLIENT_UID
+        if mqtt_url:
+            self.mqtt_url = mqtt_url
+        if client_uid:
+            self.client_uid = client_uid
         super(MQTTRPC, self).__init__(client_id=self.client_uid, loop=loop,
                                       config=config)
         for signame in ('SIGINT', 'SIGTERM'):
@@ -67,6 +70,7 @@ class MQTTRPC(MQTTClient):
         list(map(lambda task: task.cancel(), tasks))
         results = await asyncio.gather(*tasks, return_exceptions=True)
         logger.debug('Finished cancelling tasks, result: {}'.format(results))
+        self.loop.stop()
 
 
     async def process_messages(self):
