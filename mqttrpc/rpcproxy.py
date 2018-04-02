@@ -90,6 +90,13 @@ class OdooRPCProxy(RPCProxy):
                       ids, fields])
 
 
+    def write(self, model, rec_id, vals, context={}):
+        logger.debug('write {} {} {}'.format(model, vals, context))
+        return self.call(service='object', method='execute',
+                args=[self.db, self.user_id, self.password, model, 'write',
+                      rec_id, vals])
+
+
     def create(self, model, vals, context=None):
         logger.debug('create {} vals {}'.format(model, vals))
         return self.call(service='object', method='execute',
