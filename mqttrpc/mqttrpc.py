@@ -47,12 +47,13 @@ class MQTTRPC(MQTTClient):
         self.loop = loop
         self.protocol = JSONRPCProtocol()
         self.dispatcher = dispatcher
+        self.config = config
         if mqtt_url:
             self.mqtt_url = mqtt_url
         if client_uid:
             self.client_uid = client_uid
         super(MQTTRPC, self).__init__(client_id=self.client_uid, loop=loop,
-                                      config=config)
+                                      config=self.config)
         for signame in ('SIGINT', 'SIGTERM'):
             self.loop.add_signal_handler(getattr(signal, signame),
                 lambda: asyncio.ensure_future(self.stop()))
@@ -75,6 +76,7 @@ class MQTTRPC(MQTTClient):
 
 
     async def process_messages(self):
+        self.mqtt_url = self.config.get('broker',{}).get('uri', self.mqtt_url)
         logger.info('Connecting to {}'.format(self.mqtt_url))
         await self.connect(self.mqtt_url, cleansession=self.cleansession)
         logger.info('Connected.')
